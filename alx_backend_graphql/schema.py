@@ -1,12 +1,12 @@
 import graphene
 
-class Query(graphene.ObjectType):
-    # a field called 'hello' that returns a String
-    hello = graphene.String()
+class CRMQuery(graphene.ObjectType):
+    pass
 
-    # 'resolver' function provides the data for the 'hello' field
+class Query(CRMQuery, graphene.ObjectType):
+    hello = graphene.String()
+    
     def resolve_hello(root, info):
         return "Hello, GraphQL!"
 
-# Create the schema instance
 schema = graphene.Schema(query=Query)
