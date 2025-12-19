@@ -190,9 +190,8 @@ class CreateOrder(graphene.Mutation):
             return CreateOrder(order=order)
         except ValidationError as e:
             raise Exception(str(e))
-
 # Query Class for CRM
-class CRMQuery(graphene.ObjectType):
+class Query(graphene.ObjectType):
     all_customers = graphene.List(CustomerType)
     all_products = graphene.List(ProductType)
     all_orders = graphene.List(OrderType)
@@ -207,7 +206,7 @@ class CRMQuery(graphene.ObjectType):
         return Order.objects.all()
 
 # Mutation Class for CRM
-class CRMMutation(graphene.ObjectType):
+class Mutation(graphene.ObjectType):
     create_customer = CreateCustomer.Field()
     bulk_create_customers = BulkCreateCustomers.Field()
     create_product = CreateProduct.Field()
