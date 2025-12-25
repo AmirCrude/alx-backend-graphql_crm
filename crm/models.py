@@ -31,8 +31,8 @@ class Order(models.Model):
     def calculate_total(self):
         return sum(product.price for product in self.products.all())
     
-    def save(self, *args, **kwargs):
-        if not self.pk:  # Only on creation
-            super().save(*args, **kwargs)
-        self.total_amount = self.calculate_total()
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     if not self.pk:  # Only on creation
+    #         super().save(*args, **kwargs)
+    #     self.total_amount = self.calculate_total()
+    #     super().save(*args, **kwargs)

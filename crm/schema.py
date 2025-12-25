@@ -7,29 +7,23 @@ from .models import Customer, Product, Order
 # from graphene_django.filter import DjangoFilterConnectionField
 # from django_filters import OrderingFilter
 # from .filters import CustomerFilter, ProductFilter, OrderFilter
-from graphene import relay
+# from graphene import relay
 
 # GraphQL Types
 class CustomerType(DjangoObjectType):
     class Meta:
         model = Customer
         fields = ("id", "name", "email", "phone", "created_at")
-        interfaces = (relay.Node,)
-        filter_fields = {}
 
 class ProductType(DjangoObjectType):
     class Meta:
         model = Product
         fields = ("id", "name", "price", "stock", "created_at")
-        interfaces = (relay.Node,)
-        filter_fields = {}
 
 class OrderType(DjangoObjectType):
     class Meta:
         model = Order
         fields = ("id", "customer", "products", "order_date", "total_amount")
-        interfaces = (relay.Node,)
-        filter_fields = {}
 
 # Input Types
 class CustomerInput(graphene.InputObjectType):
