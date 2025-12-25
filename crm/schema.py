@@ -4,22 +4,32 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 import re
 from .models import Customer, Product, Order
+# from graphene_django.filter import DjangoFilterConnectionField
+# from django_filters import OrderingFilter
+# from .filters import CustomerFilter, ProductFilter, OrderFilter
+from graphene import relay
 
 # GraphQL Types
 class CustomerType(DjangoObjectType):
     class Meta:
         model = Customer
         fields = ("id", "name", "email", "phone", "created_at")
+        interfaces = (relay.Node,)
+        filter_fields = {}
 
 class ProductType(DjangoObjectType):
     class Meta:
         model = Product
         fields = ("id", "name", "price", "stock", "created_at")
+        interfaces = (relay.Node,)
+        filter_fields = {}
 
 class OrderType(DjangoObjectType):
     class Meta:
         model = Order
         fields = ("id", "customer", "products", "order_date", "total_amount")
+        interfaces = (relay.Node,)
+        filter_fields = {}
 
 # Input Types
 class CustomerInput(graphene.InputObjectType):
@@ -190,12 +200,40 @@ class CreateOrder(graphene.Mutation):
             return CreateOrder(order=order)
         except ValidationError as e:
             raise Exception(str(e))
+
 # Query Class for CRM
 class Query(graphene.ObjectType):
+    # Regular queries
     all_customers = graphene.List(CustomerType)
     all_products = graphene.List(ProductType)
     all_orders = graphene.List(OrderType)
     
+    # Filtered queries
+    customers = graphene.List(
+        CustomerType,
+        name=graphene.String(),
+        email=graphene.String(),
+        phone_pattern=graphene.String()
+    )
+    
+    products = graphene.List(
+        ProductType,
+        name=graphene.String(),
+        min_price=graphene.Decimal(),
+        max_price=graphene.Decimal(),
+        min_stock=graphene.Int(),
+        max_stock=graphene.Int()
+    )
+    
+    orders = graphene.List(
+        OrderType,
+        min_total=graphene.Decimal(),
+        max_total=graphene.Decimal(),
+        customer_name=graphene.String(),
+        product_name=graphene.String()
+    )
+    
+    # Resolvers for regular queries
     def resolve_all_customers(self, info):
         return Customer.objects.all()
     
@@ -204,6 +242,51 @@ class Query(graphene.ObjectType):
     
     def resolve_all_orders(self, info):
         return Order.objects.all()
+    
+    # Resolver for filtered customers
+    def resolve_customers(self, info, name=None, email=None, phone_pattern=None):
+        queryset = Customer.objects.all()
+        
+        if name:
+            queryset = queryset.filter(name__icontains=name)
+        if email:
+            queryset = queryset.filter(email__icontains=email)
+        if phone_pattern:
+            queryset = queryset.filter(phone__startswith=phone_pattern)
+        
+        return queryset
+    
+    # Resolver for filtered products
+    def resolve_products(self, info, name=None, min_price=None, max_price=None, min_stock=None, max_stock=None):
+        queryset = Product.objects.all()
+        
+        if name:
+            queryset = queryset.filter(name__icontains=name)
+        if min_price:
+            queryset = queryset.filter(price__gte=min_price)
+        if max_price:
+            queryset = queryset.filter(price__lte=max_price)
+        if min_stock:
+            queryset = queryset.filter(stock__gte=min_stock)
+        if max_stock:
+            queryset = queryset.filter(stock__lte=max_stock)
+        
+        return queryset
+    
+    # Resolver for filtered orders
+    def resolve_orders(self, info, min_total=None, max_total=None, customer_name=None, product_name=None):
+        queryset = Order.objects.all()
+        
+        if min_total:
+            queryset = queryset.filter(total_amount__gte=min_total)
+        if max_total:
+            queryset = queryset.filter(total_amount__lte=max_total)
+        if customer_name:
+            queryset = queryset.filter(customer__name__icontains=customer_name)
+        if product_name:
+            queryset = queryset.filter(products__name__icontains=product_name).distinct()
+        
+        return queryset
 
 # Mutation Class for CRM
 class Mutation(graphene.ObjectType):
